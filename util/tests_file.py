@@ -18,9 +18,9 @@ sys.path.append('./compare/')
 import basic_compare
 
 
-def read_tests(filename):
+def read_tests(filename, seed=None, num_nodes=5 ):
   tests = []
-  generators = {'key_val_uniform': key_val_uniform.KeyValUniTestGen}
+  generators = {'key_val_uniform': key_val_uniform.KeyValUniTestGen }
   candidates = {'raftd': raftd.RaftdCandidate,
                 'raftd_forgetful': raftd_forgetful.RaftdForgetfulCandidate,
                 'kayvee': kayvee.KayveeCandidate,
@@ -31,7 +31,7 @@ def read_tests(filename):
     name = spec["name"]
     runners = spec["candidates"]
     for t in spec["tests"]:
-      gen = generators[t["gen"]](5)
+      gen = generators[t["gen"]](num_nodes, seed=seed )
       impls = [candidates[r]() for r in runners]
       comp = comparators[t["comp"]]()
       tests.append(flotsam_test.FlotsamTest(gen, impls, comp))

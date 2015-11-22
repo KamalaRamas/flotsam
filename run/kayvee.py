@@ -16,13 +16,20 @@ import os.path
 import os
 
 class KayveeCandidate(candidate.FlotsamCandidate):
-  def __init__(self):
+  def __init__(self, num_nodes=5 ):
     super(KayveeCandidate,self).__init__()
     self.name = "libraft/kayvee"
     self.docker_image = "kayvee"
-    self.web_ports = [4001, 4002, 4003, 4004, 4005]
-    self.raft_ports = [5001, 5002, 5003, 5004, 5005]
-    self.num_containers = len(self.web_ports)
+    web_port = 4001
+    raft_port = 5001
+    self.web_ports = []
+    self.raft_ports = []
+    for ind in range(1, num_nodes+1 ):
+        self.web_ports.append(web_port)
+	self.raft_ports.append(raft_port)
+	web_port += 1
+	raft_port += 1
+    self.num_containers = num_nodes
     self.leader = 0 # Note, this is not thread-safe.
     # Currently we have no concurrent actions, though.
     self.LOCAL_CONFIG_DIR = os.path.abspath('./kayvee-configs/')
@@ -175,6 +182,7 @@ logging:
       try:
         put_data = json.dumps({"newValue": str(val)}, indent=1) # json.dumps({'newValue': val})
         url = "http://%s:%d/keys/%s" % (self.hostname_for_port(self.web_ports[self.leader]), self.web_ports[self.leader], key)
+        print url
         headers = {'Content-Type': 'application/json'}
         r = requests.put(url, data=put_data, headers=headers, allow_redirects=False)
         results.append(r.content)

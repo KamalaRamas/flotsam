@@ -1,7 +1,6 @@
 {
   "name": "real implementations",
   "candidates": [
-      "lite-raft",
       "kayvee",
       "raftd"
     ],

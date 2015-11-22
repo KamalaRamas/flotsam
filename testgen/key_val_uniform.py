@@ -14,10 +14,12 @@ class KeyValUniTestGen(KeyValTestGen):
   Initialize the test generator. Use a seed if you want reproducible tests.
   """
   def __init__(self, num_nodes, num_keys=200, seed=None):
+    print seed
     self.keys = [self.int_to_key(i) for i in xrange(num_keys)]
     random.seed(seed)
     self.current_failures = set()
     self.num_nodes = num_nodes
+    self.seed = seed
 
   def int_to_key(self, n):
     curr = n
@@ -38,26 +40,33 @@ class KeyValUniTestGen(KeyValTestGen):
   def mark_failed(self, node_id):
     self.current_failures.add(node_id)
 
-  def gen_tests(self, n=1000, prob_fail=0.01):
+  def gen_tests(self, n=10, prob_fail=0.01):
     result = []
+    fname = str(self.num_nodes) + str(self.seed) + "tests"
+    fd = open(fname, "w") 
     for i in xrange(n):
       key = random.choice(self.keys)
       val = str(random.randint(1,99999999))
+      fd.write("Set %s %s\n" % (key, val ))
       test = dict(op="set", key=key, val=val)
       result.append(json.dumps(test))
+      fd.write("Get %s\n" % key )
       test = dict(op="get", key=key)
       result.append(json.dumps(test))
-      if random.random() < 0.01 and self.can_fail():
+      if random.random() < prob_fail and self.can_fail():
         newly_failed = random.choice(sorted(list(set(xrange(self.num_nodes)).difference(self.current_failures))))
         self.mark_failed(newly_failed)
         if random.random() < 0.5:
+          fd.write("Fail %s" % newly_failed )
           sys.stderr.write("Inserting node failure %d\n" % newly_failed)
           test = dict(op="fail", nodes=[newly_failed])
         else:
+          fd.write("Partition %s" % nely_failed )
           sys.stderr.write("Inserting node partition %d\n" % newly_failed)
           test = dict(op="partition", nodes=[newly_failed])
         result.append(json.dumps(test))
     sys.stderr.write("Finished generating tests.\n")
+    fd.close()
     return result
 
 if __name__=="__main__":

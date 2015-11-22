@@ -10,12 +10,16 @@ import sys
 from time import sleep
 
 class RaftdCandidate(candidate.FlotsamCandidate):
-  def __init__(self):
+  def __init__(self, num_nodes=5 ):
     super(RaftdCandidate,self).__init__()
     self.name = "goraft/raftd"
     self.docker_image = "raftd"
-    self.ports = [4001, 4002, 4003, 4004, 4005]
-    self.num_containers = len(self.ports)
+    self.num_containers = num_nodes
+    port = 4001
+    self.ports = []
+    for ind in range( 1, num_nodes+1 ):
+        self.ports.append(port)
+        port += 1
     self.leader = 0 # Note, this is not thread-safe.
     # Currently we have no concurrent actions, though.
 

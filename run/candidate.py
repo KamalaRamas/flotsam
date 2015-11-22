@@ -14,6 +14,7 @@ import os.path
 import shutil
 import sys
 import netifaces
+import time
 
 DNSMASQ_DIR = "/opt/flotsam/dnsmasq.d/"
 
@@ -173,33 +174,61 @@ class FlotsamCandidate(object):
   Run the entire test--boot up the virtualized environment, test, and clean up.
   """
   def run_test(self, ops_stream):
+    file_name = str(self.docker_image) + str(self.num_containers) + str(time.clock())
+    fd = open( file_name, "w" )
+    initial_time = time.time()
     sys.stderr.write("Creating containers...\n")
     self.create_containers()
     sys.stderr.write("Launching containers...\n")
     self.launch_containers()
+    setup_time = time.time() - initial_time
     sys.stderr.write("Starting processes...\n")
     self.start_containers()
     sys.stderr.write("Beginning tests...\n")
     output = []
+    print len(ops_stream)
     for num, line in enumerate(ops_stream):
       test = json.loads(line.strip())
+      print num,line
       result = {}
       result["candidate"] = self.name
       result["test_op"] = test
       op = test["op"]
       if op == "get":
+	fd.write("G: %s " % test["key"] )
+	start_time = time.clock()
         result["result"] = self.read(test["key"])
+	end_time = time.clock()
       elif op == "set":
+	fd.write("S: %s %s " %(test["key"], test["val"]))
+	start_time = time.clock()
         result["result"] = self.write(test["key"], test["val"])
+	end_time = time.clock()
       elif op == "fail":
+	fd.write("F: %d " % test["nodes"] )
+	start_time = time.clock()
         result["result"] = self.fail_node(test["nodes"])
+	end_time = time.clock()
       elif op == "partition":
+	fd.write("P: %d " % test["nodes"] )
+	start_time = time.clock()
         result["result"] = self.partition_nodes(test["nodes"])
+	end_time = time.clock()
       elif op == "unpartition":
+	fd.write("U: ")
+	start_time = time.clock()
         result["result"] = self.unpartition_nodes(test["nodes"])
+	end_time = time.clock()
+      usec_time = (end_time - start_time)*1000000
+      fd.write("%f \n" % usec_time )
+      print result["result"]
       output.append(json.dumps(result))
       if num % 10 == 0:
         sys.stderr.write(".")
     sys.stderr.write("\nCleaning up containers...\n")
     self.cleanup_containers()
+    total_time = time.time() - initial_time
+    fd.write("Setup time: %d\n" % setup_time );
+    fd.write("Total time taken: %d\n" % total_time )
+    fd.close()
     return output

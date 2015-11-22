@@ -16,11 +16,11 @@ import os.path
 import os
 
 class LiteraftCandidate(candidate.FlotsamCandidate):
-  def __init__(self):
+  def __init__(self, num_nodes=5 ):
     super(LiteraftCandidate,self).__init__()
     self.name = "lite-raft"
     self.docker_image = "lite-raft"
-    self.parties = range(5)
+    self.parties = range(num_nodes)
     self.num_containers = len(self.parties)
     self.leader = 0 # Note, this is not thread-safe.
     # Currently we have no concurrent actions, though.

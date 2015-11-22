@@ -9,9 +9,13 @@ and the name.
 import raftd
 
 class RaftdForgetfulCandidate(raftd.RaftdCandidate):
-  def __init__(self):
+  def __init__(self, num_nodes=5 ):
     super(RaftdForgetfulCandidate,self).__init__()
     self.name = "connorg/raftd-forgetful"
     self.docker_image = "raftd-forgetful"
-    self.ports = [5001, 5002, 5003, 5004, 5005]
-    self.num_containers = len(self.ports)
+    self.num_containers = num_nodes
+    port = 5001
+    self.ports = []
+    for ind in range( 1, num_nodes+1 ):
+	self.ports.append(port)
+	port += 1

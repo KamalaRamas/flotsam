@@ -14,5 +14,6 @@ class FlotsamTest(object):
     t = self.test_gen.gen_tests()
     outputs = {}
     for r in self.runners:
+      print r.name + "\n"
       outputs[r.name] = r.run_test(t)
     self.comparator.compare(outputs)
