@@ -40,7 +40,7 @@ class KeyValUniTestGen(KeyValTestGen):
   def mark_failed(self, node_id):
     self.current_failures.add(node_id)
 
-  def gen_tests(self, n=10, prob_fail=0.01):
+  def gen_tests(self, n=1000, prob_fail=0):
     result = []
     fname = str(self.num_nodes) + str(self.seed) + "tests"
     fd = open(fname, "w") 
@@ -57,11 +57,11 @@ class KeyValUniTestGen(KeyValTestGen):
         newly_failed = random.choice(sorted(list(set(xrange(self.num_nodes)).difference(self.current_failures))))
         self.mark_failed(newly_failed)
         if random.random() < 0.5:
-          fd.write("Fail %s" % newly_failed )
+          fd.write("Fail %s\n" % newly_failed )
           sys.stderr.write("Inserting node failure %d\n" % newly_failed)
           test = dict(op="fail", nodes=[newly_failed])
         else:
-          fd.write("Partition %s" % nely_failed )
+          fd.write("Partition %s\n" % newly_failed )
           sys.stderr.write("Inserting node partition %d\n" % newly_failed)
           test = dict(op="partition", nodes=[newly_failed])
         result.append(json.dumps(test))

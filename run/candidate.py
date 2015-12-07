@@ -173,9 +173,8 @@ class FlotsamCandidate(object):
   """
   Run the entire test--boot up the virtualized environment, test, and clean up.
   """
-  def run_test(self, ops_stream):
-    file_name = str(self.docker_image) + str(self.num_containers) + str(time.clock())
-    fd = open( file_name, "w" )
+  def run_test(self, ops_stream, seed ):
+    file_name = str(self.docker_image)  +str(self.num_containers) + "nodes" + "seed" + str(seed) + str(time.clock())
     initial_time = time.time()
     sys.stderr.write("Creating containers...\n")
     self.create_containers()
@@ -186,6 +185,7 @@ class FlotsamCandidate(object):
     self.start_containers()
     sys.stderr.write("Beginning tests...\n")
     output = []
+    to_write = []
     print len(ops_stream)
     for num, line in enumerate(ops_stream):
       test = json.loads(line.strip())
@@ -195,38 +195,60 @@ class FlotsamCandidate(object):
       result["test_op"] = test
       op = test["op"]
       if op == "get":
-	fd.write("G: %s " % test["key"] )
-	start_time = time.clock()
+	#fd.write("G: %s " % test["key"] )
+	single_line = "%f G: %s " % (time.time(), test["key"])
+	start_wait_time = time.time()
+	start_clock_time = time.clock()
         result["result"] = self.read(test["key"])
-	end_time = time.clock()
+	end_clock_time = time.clock()
+	end_wait_time = time.time()
       elif op == "set":
-	fd.write("S: %s %s " %(test["key"], test["val"]))
-	start_time = time.clock()
+	#fd.write("S: %s %s " %(test["key"], test["val"]))
+	single_line = "%f S: %s %s" % ( time.time(), test["key"], test["val"])
+	start_wait_time = time.time()
+	start_clock_time = time.clock()
         result["result"] = self.write(test["key"], test["val"])
-	end_time = time.clock()
+	end_clock_time = time.clock()
+	end_wait_time = time.time()
       elif op == "fail":
-	fd.write("F: %d " % test["nodes"] )
-	start_time = time.clock()
+	#fd.write("F: " )
+	single_line = "%f F: " % time.time()
+	start_wait_time = time.time()
+	start_clock_time = time.clock()
         result["result"] = self.fail_node(test["nodes"])
-	end_time = time.clock()
+	end_clock_time = time.clock()
+	end_wait_time = time.time()
       elif op == "partition":
-	fd.write("P: %d " % test["nodes"] )
-	start_time = time.clock()
+	#fd.write("P: " )
+	single_line = "%f P: " % time.time()
+	start_wait_time = time.time()
+	start_clock_time = time.clock()
         result["result"] = self.partition_nodes(test["nodes"])
-	end_time = time.clock()
+	end_clock_time = time.clock()
+	end_wait_time = time.time()
       elif op == "unpartition":
-	fd.write("U: ")
-	start_time = time.clock()
+	#fd.write("U: ")
+	single_line = "%f U: " % time.time()
+	start_wait_time = time.time()
+	start_clock_time = time.clock()
         result["result"] = self.unpartition_nodes(test["nodes"])
-	end_time = time.clock()
-      usec_time = (end_time - start_time)*1000000
-      fd.write("%f \n" % usec_time )
+	end_clock_time = time.clock()
+	end_wait_time = time.time()
+      msec_time = (end_clock_time - start_clock_time)*1000
+      elapsed_time = (end_wait_time - start_wait_time)*1000
+      print msec_time,elapsed_time
+      #fd.write("%f %f\n" % (msec_time, elapsed_time) )
+      single_line += "%f %f\n" % (msec_time, elapsed_time)
       print result["result"]
       output.append(json.dumps(result))
+      to_write.append(single_line)
       if num % 10 == 0:
         sys.stderr.write(".")
     sys.stderr.write("\nCleaning up containers...\n")
     self.cleanup_containers()
+    fd = open( file_name, "w" )
+    for line in to_write:
+	fd.write(line)
     total_time = time.time() - initial_time
     fd.write("Setup time: %d\n" % setup_time );
     fd.write("Total time taken: %d\n" % total_time )

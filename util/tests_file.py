@@ -19,7 +19,7 @@ import basic_compare
 
 
 def read_tests(filename, seed=None, num_nodes=5 ):
-  tests = []
+  tests = [] 
   generators = {'key_val_uniform': key_val_uniform.KeyValUniTestGen }
   candidates = {'raftd': raftd.RaftdCandidate,
                 'raftd_forgetful': raftd_forgetful.RaftdForgetfulCandidate,
@@ -31,8 +31,8 @@ def read_tests(filename, seed=None, num_nodes=5 ):
     name = spec["name"]
     runners = spec["candidates"]
     for t in spec["tests"]:
-      gen = generators[t["gen"]](num_nodes, seed=seed )
-      impls = [candidates[r]() for r in runners]
+      gen = generators[t["gen"]]( num_nodes, seed=seed )
+      impls = [candidates[r]( num_nodes ) for r in runners]
       comp = comparators[t["comp"]]()
-      tests.append(flotsam_test.FlotsamTest(gen, impls, comp))
+      tests.append(flotsam_test.FlotsamTest(gen, impls, comp, seed ))
   return tests

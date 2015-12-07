@@ -64,7 +64,7 @@ class RaftdCandidate(candidate.FlotsamCandidate):
     leader_port = self.ports[0]
     leader_hostname = self.hostname_for_port(leader_port)
     leader = "%s:%d" % (leader_hostname, leader_port)
-    leader_cmd = ["app", "-trace", "-h", leader_hostname, "-p", str(leader_port), "~/raft/"]
+    leader_cmd = ["app", "-trace", "-v", "-debug", "-h", leader_hostname, "-p", str(leader_port), "~/raft/"]
     leader_container = self.containers[0]
     sys.stderr.write("Starting %s\n" % str(leader_cmd))
     self.docker_cli.execute(leader_container["Id"], leader_cmd, detach=True, stdout=False, stderr=False)
@@ -72,7 +72,7 @@ class RaftdCandidate(candidate.FlotsamCandidate):
     # Join the non-leaders to the leader
     for c, port in zip(self.containers[1:], self.ports[1:]):
       hostname = self.hostname_for_port(port)
-      follower_cmd = ["app", "-trace", "-h", hostname, "-p", str(port), "-join", leader, "~/raft/"]
+      follower_cmd = ["app", "-trace", "-v", "-debug", "-h", hostname, "-p", str(port), "-join", leader, "~/raft/"]
       sys.stderr.write("Starting %s\n" % follower_cmd)
       self.docker_cli.execute(c["Id"], follower_cmd, detach=True, stdout=False, stderr=False)
 
@@ -82,6 +82,8 @@ class RaftdCandidate(candidate.FlotsamCandidate):
     results = []
     while (True):
       try:
+	print self.leader
+	print "http://%s:%d/db/%s" % (self.get_container_ips()[self.leader], self.ports[self.leader], key)
         attempt = urllib2.urlopen("http://%s:%d/db/%s" % (self.get_container_ips()[self.leader], self.ports[self.leader], key))
         results.append(attempt.read())
         if int(attempt.getcode()) == 200:
@@ -97,8 +99,11 @@ class RaftdCandidate(candidate.FlotsamCandidate):
     results = []
     while (True):
       try:
+	print self.leader
+	print "http://%s:%d/db/%s" % (self.get_container_ips()[self.leader], self.ports[self.leader], key)
         attempt = urllib2.urlopen("http://%s:%d/db/%s" % (self.get_container_ips()[self.leader], self.ports[self.leader], key), data=val)
         results.append(attempt.read())
+	print "After URlopen"
         if int(attempt.getcode()) == 200:
           results.append("Success")
           break # Done if we got a 200!

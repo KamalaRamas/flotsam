@@ -1,8 +1,7 @@
 {
   "name": "raftd versus raftd-forgetful, basic",
   "candidates": [
-      "raftd",
-      "raftd_forgetful"
+      "raftd"
     ],
   "tests": [
       {
